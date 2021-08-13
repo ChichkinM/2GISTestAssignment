@@ -1,6 +1,6 @@
 import QtQuick 2.8
-import QtQuick.Dialogs 1.0
 import QtQuick.Controls 2.1
+import Qt.labs.platform 1.1
 
 Item {
     readonly property bool hasUrl: doublegis.model.url != ""
@@ -30,9 +30,19 @@ Item {
     FileDialog {
         id: fileDialog
         title: "Выберите файл"
-        folder: shortcuts.home
         onAccepted: {
             doublegis.model.url = fileDialog.fileUrls[0]
         }
+    }
+
+    Label {
+        text: {
+            var percent = (doublegis.model.processedSize / doublegis.model.fullSize) * 100
+            percent = parseInt(percent, 10)
+            return percent + "% (" + doublegis.model.processedSize +
+                   " / " + doublegis.model.fullSize + ")"
+        }
+        visible: hasUrl
+        anchors.bottom: parent.bottom
     }
 }

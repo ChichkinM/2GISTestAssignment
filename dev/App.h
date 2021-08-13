@@ -21,10 +21,13 @@ Q_OBJECT
 
 public:
     App(int &argc, char **argv) noexcept;
+    void run() noexcept;
+    ~App() override;
 
 private:
     QQmlApplicationEngine *const qmlEngine;
     parser::Domain *const parser;
+    QThread *const parserThread;
     model::Domain *const model;
 };
 

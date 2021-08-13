@@ -11,5 +11,6 @@ int main(int argc, char *argv[])
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     doublegis::App app(argc, argv);
+    app.run();
     return app.exec();
 }

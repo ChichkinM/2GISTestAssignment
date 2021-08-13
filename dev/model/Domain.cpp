@@ -12,13 +12,28 @@ namespace doublegis::model {
 
 Domain::Domain(parser::Domain &parser, QObject *parent) noexcept
         : QObject(parent),
+          processedData(0),
           parser(parser)
 {
+    connect(&parser.getStatistic(), &parser::Statistic::processedDataChanged,
+            this, [this](quint64 newProcessedData) {
+                if (processedData != newProcessedData) {
+                    processedData = newProcessedData;
+                    emit processedDataChanged();
+                }
+            });
+    connect(&parser, &parser::Domain::fileSizeChanged,
+            this, [this](quint64 newFullSize) {
+                if (fullSize != newFullSize) {
+                    fullSize = newFullSize;
+                    emit fullSizeChanged();
+                }
+            });
 }
 
 void Domain::run() noexcept
 {
-    parser.run(url);
+    parser.invokeRun(url);
 }
 
 }

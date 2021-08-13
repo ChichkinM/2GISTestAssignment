@@ -16,9 +16,16 @@ namespace doublegis {
 App::App(int &argc, char **argv) noexcept
         : QGuiApplication(argc, argv),
           qmlEngine(new QQmlApplicationEngine(this)),
-          parser(new parser::Domain(this)),
+          parser(new parser::Domain(nullptr)),
+          parserThread(new QThread(this)),
           model(new model::Domain(*parser, this))
 {
+}
+
+void App::run() noexcept {
+    parser->moveToThread(parserThread);
+    parserThread->start();
+
     qmlEngine->rootContext()->setContextProperty("doublegis", this);
 
     QQuickStyle::setStyle("Material");
@@ -27,6 +34,12 @@ App::App(int &argc, char **argv) noexcept
     if (component.isError()) {
         qDebug() << component.errorString();
     }
+}
+
+App::~App()
+{
+    parserThread->quit();
+    parserThread->wait();
 }
 
 }

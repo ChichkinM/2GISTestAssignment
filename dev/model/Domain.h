@@ -10,12 +10,15 @@
 #include <QUrl>
 #include <parser/Domain.h>
 
-namespace doublegis::model {
+namespace doublegis {
+namespace model {
 
 class Domain : public QObject
 {
 Q_OBJECT
     Q_PROPERTY(QUrl url MEMBER url NOTIFY urlChanged)
+    Q_PROPERTY(quint64 processedSize MEMBER processedData NOTIFY processedDataChanged)
+    Q_PROPERTY(quint64 fullSize MEMBER fullSize NOTIFY fullSizeChanged)
 
 public:
     Domain(parser::Domain &parser, QObject *parent) noexcept;
@@ -25,10 +28,16 @@ public slots:
 
 signals:
     void urlChanged();
+    void processedDataChanged();
+    void fullSizeChanged();
 
 private:
     QUrl url;
+    quint64 processedData;
+    quint64 fullSize;
+
     parser::Domain &parser;
 };
 
+}
 }
