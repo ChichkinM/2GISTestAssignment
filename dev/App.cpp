@@ -14,7 +14,7 @@
 namespace doublegis {
 
 App::App(int &argc, char **argv) noexcept
-        : QGuiApplication(argc, argv),
+        : QApplication(argc, argv),
           qmlEngine(new QQmlApplicationEngine(this)),
           parser(new parser::Domain(nullptr)),
           parserThread(new QThread(this)),

@@ -21,21 +21,26 @@ public:
     explicit Statistic(QObject * parent) noexcept;
 
     void run(size_t fullDataSize) noexcept;
-    void push(Word word) noexcept;
+    void push(StatisticStorage && words) noexcept;
     void update(size_t processedDataSize) noexcept;
     void clear() noexcept;
 
 signals:
     void processedDataChanged(quint64 data);
+    void statisticChanged(doublegis::parser::MostCommonWordsStorage newStorage);
+
+private:
+    bool processUpdate(StatisticStorage::iterator entryIt) noexcept;
 
 public:
     QMutex mutex;
-    std::map<Word, uint64_t> fullStatistic;
-
-    size_t fullDataSize;
+    StatisticStorage fullStatistic;
+    MostCommonWordsStorage mostCommon;
 
     QMutex mutex2;
     size_t processedDataSize;
+
+    size_t fullDataSize;
     size_t prevProgressEmited;
 };
 

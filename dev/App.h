@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 
 #include "model/Domain.h"
@@ -14,7 +14,7 @@
 
 namespace doublegis {
 
-class App : public QGuiApplication
+class App : public QApplication
 {
 Q_OBJECT
     Q_PROPERTY(doublegis::model::Domain *model MEMBER model CONSTANT)

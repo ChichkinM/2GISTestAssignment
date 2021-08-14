@@ -1,6 +1,12 @@
 <RCC>
     <qresource prefix="/">
         <file>MainWindow.qml</file>
-        <file>FirstScreen.qml</file>
+        <file>Header.qml</file>
+        <file>Chart.qml</file>
+        <file>HorizontalLine.qml</file>
+        <file>VerticalLine.qml</file>
+        <file>Footer.qml</file>
+        <file>MySimpleChart.qml</file>
+        <file>MySimpleChartBarDelegate.qml</file>
     </qresource>
 </RCC>

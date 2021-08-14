@@ -9,7 +9,7 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(Qt5 COMPONENTS Core Gui Qml Quick QuickControls2 REQUIRED)
+find_package(Qt5 COMPONENTS Core Gui Qml Quick QuickControls2 Widgets REQUIRED)
 
 file(GLOB_RECURSE HEADER_FILES "dev/*.h")
 file(GLOB_RECURSE SOURCE_FILES "dev/*.cpp")
@@ -27,4 +27,5 @@ target_link_libraries(${TARGET_NAME} PRIVATE
         Qt5::Qml
         Qt5::Quick
         Qt5::QuickControls2
+        Qt5::Widgets
         )

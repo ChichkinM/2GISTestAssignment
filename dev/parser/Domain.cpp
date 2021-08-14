@@ -43,8 +43,7 @@ Domain::Domain(QObject *parent) noexcept
           pool(new QThreadPool(this)),
           statistic(new Statistic(this))
 {
-    auto availableThreads = QThread::idealThreadCount();
-    pool->setMaxThreadCount(availableThreads - 1);
+    pool->setMaxThreadCount(1);
 }
 
 void Domain::invokeRun(const QUrl &source) noexcept
@@ -121,6 +120,8 @@ void Domain::run(const QUrl &source) noexcept
     statistic->clear();
     file->unmap(memory);
     file->close();
+
+    emit finished();
 }
 
 }

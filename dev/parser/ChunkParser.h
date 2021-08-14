@@ -17,15 +17,25 @@ namespace parser {
 class ChunkParser : public QRunnable
 {
 public:
-    ChunkParser(Chunk chunk, int index, Statistic & statistic);
+    ChunkParser(Chunk chunk, int index, Statistic &statistic);
 
 private:
     void run() override;
 
+    void processProgress(size_t newProgress) noexcept;
+    void postProgress(size_t newProgress) noexcept;
+
+    void processWord(size_t beginIndex, size_t length) noexcept;
+    void postLocalStatistic() noexcept;
+
 private:
     int parserIndex;
     Chunk chunk;
-    Statistic & statistic;
+    Statistic &statistic;
+
+    size_t prevPostedIndex;
+    StatisticStorage localStatistic;
+    size_t wordsInLocalStatistic;
 };
 
 }

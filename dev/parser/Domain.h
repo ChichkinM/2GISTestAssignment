@@ -24,6 +24,7 @@ public:
 
 signals:
     void fileSizeChanged(quint64 size);
+    void finished();
 
 private slots:
     void run(const QUrl &source) noexcept;

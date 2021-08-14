@@ -1,8 +1,11 @@
 import QtQuick 2.8
 import QtQuick.Controls 2.1
+
+import QtCharts 2.2
 import QtQuick.Controls.Material 2.1
 
 ApplicationWindow {
+    id: applicationWindow
     visible: true
     minimumWidth: 640
     minimumHeight: 480
@@ -11,13 +14,22 @@ ApplicationWindow {
     Material.theme: Material.Dark
     Material.accent: Material.Teal
 
-    Component {
-        id: firstScreen
-        FirstScreen {}
+    Header {
+        id: header
+        width: parent.width
     }
 
-    Loader {
-        anchors.fill: parent
-        sourceComponent: firstScreen
+    Chart {
+        width: parent.width
+        anchors {
+            top: header.bottom
+            bottom: footer.top
+        }
+    }
+
+    Footer {
+        id: footer
+        width: parent.width
+        anchors.bottom: parent.bottom
     }
 }
