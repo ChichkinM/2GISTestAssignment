@@ -6,32 +6,39 @@
 
 #pragma once
 
-#include <QRunnable>
+#include <QObject>
 #include "Types.h"
 #include "Statistic.h"
-#include <QDebug>
+#include "Reader.h"
 
 namespace doublegis {
 namespace parser {
 
-class ChunkParser : public QRunnable
+class ChunkParser : public QObject
 {
+    Q_OBJECT
 public:
-    ChunkParser(Chunk chunk, int index, Statistic &statistic);
+    ChunkParser(int index, Reader &reader, Statistic &statistic) noexcept;
+
+public slots:
+    void run();
+
+signals:
+    void finished();
 
 private:
-    void run() override;
 
+    void processChunk(Chunk & chunk) noexcept;
     void processProgress(size_t newProgress) noexcept;
     void postProgress(size_t newProgress) noexcept;
 
-    void processWord(size_t beginIndex, size_t length) noexcept;
+    void processWord(Chunk & chunk, size_t beginIndex, size_t length) noexcept;
     void postLocalStatistic() noexcept;
 
 private:
     int parserIndex;
-    Chunk chunk;
     Statistic &statistic;
+    Reader &reader;
 
     size_t prevPostedIndex;
     StatisticStorage localStatistic;

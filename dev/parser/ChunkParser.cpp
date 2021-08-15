@@ -5,49 +5,59 @@
  */
 
 #include "ChunkParser.h"
-#include <QDebug>
-#include <QDataStream>
-#include <iostream>
-#include <cassert>
 #include "Utils.h"
 
 namespace doublegis {
 namespace parser {
 
-ChunkParser::ChunkParser(Chunk chunk, int index, Statistic &statistic)
-        : parserIndex(index), chunk(std::move(chunk)), statistic(statistic),
+ChunkParser::ChunkParser(int index, Reader &reader, Statistic &statistic) noexcept
+        : QObject(nullptr),
+          parserIndex(index),
+          statistic(statistic), reader(reader),
           prevPostedIndex(0), wordsInLocalStatistic(0)
 {
 }
 
 void ChunkParser::run()
 {
+    while (auto expectedChunk = reader.invokeReadNextChunk()) {
+        processChunk( *expectedChunk );
+    }
+    emit finished();
+}
+
+void ChunkParser::processChunk(Chunk & chunk) noexcept
+{
+    prevPostedIndex = 0;
+    wordsInLocalStatistic = 0;
+    localStatistic.clear();
+
     auto beginWordIdx = 0;
-    for (size_t i = 0; i < chunk.second; i++) {
+    for (size_t i = 0; i < chunk.size(); i++) {
         processProgress(i);
 
-        if (!utils::isSeparator(*((char *) chunk.first + i))) {
+        if (!utils::isSeparator(chunk.at(i))) {
             continue;
         }
 
         if (beginWordIdx != i) {
-            processWord(beginWordIdx, i - beginWordIdx);
+            processWord(chunk, beginWordIdx, i - beginWordIdx);
         }
 
         beginWordIdx = i + 1;
     }
 
-    if (beginWordIdx != chunk.second) {
-        processWord(beginWordIdx, chunk.second - beginWordIdx);
+    if (beginWordIdx != chunk.size()) {
+        processWord(chunk, beginWordIdx, chunk.size() - beginWordIdx);
     }
 
     postLocalStatistic();
-    postProgress(chunk.second);
+    postProgress(chunk.size());
 }
 
-void ChunkParser::processWord(size_t beginIndex, size_t length) noexcept
+void ChunkParser::processWord(Chunk & chunk, size_t beginIndex, size_t length) noexcept
 {
-    auto word = Word::fromRawData(chunk.first + beginIndex, length);
+    auto word = chunk.mid(beginIndex, length);
     auto found = localStatistic.find(word);
     if (found != localStatistic.end()) {
         ++found->second;
@@ -56,7 +66,7 @@ void ChunkParser::processWord(size_t beginIndex, size_t length) noexcept
     }
     ++wordsInLocalStatistic;
 
-    if (wordsInLocalStatistic >= 500000) {
+    if (wordsInLocalStatistic >= 50000) {
         postLocalStatistic();
     }
 }

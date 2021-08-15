@@ -5,7 +5,7 @@
  */
 
 #include "WordsPrimaryModel.h"
-#include "parser/Types.h"
+#include <QDebug>
 
 namespace doublegis {
 namespace model {
@@ -16,57 +16,57 @@ WordsPrimaryModel::WordsPrimaryModel(QObject *parent) noexcept
 {
 }
 
-void WordsPrimaryModel::update(
-        parser::MostCommonWordsStorage newStorage) noexcept
+void WordsPrimaryModel::update( parser::MostCommonWordsStorage newStorage) noexcept
 {
     if (storage.size() < newStorage.size()) {
         storage.reserve(newStorage.size());
     }
 
+    for (auto it = storage.begin(); it != storage.end();) {
+        const auto &entry = *it;
+        auto found = std::find_if(newStorage.begin(), newStorage.end(),
+                                  [&entry](const parser::WordAndCount &word) {
+                                      return word.word == entry.word;
+                                  });
+        if (found == newStorage.end()) {
+            const auto index = std::distance(storage.begin(), it);
+            beginRemoveRows({}, index, index);
+            it = storage.erase(it);
+            endRemoveRows();
+        } else {
+            ++it;
+        }
+    }
+
     for (auto &&word : newStorage) {
         auto found = std::find_if(
                 storage.begin(), storage.end(),
-                [&word](const Entry &e) {
-                    return e.word == word.second;
+                [&word](const auto &e) {
+                    return e.word == word.word;
                 });
         if (found != storage.end()) {
-            if (found->count != word.first) {
-                found->count = word.first;
+            if (found->count != word.count) {
+                found->count = word.count;
                 const auto index = std::distance(storage.begin(), found);
                 auto currentIndex = createIndex(index, 0);
                 emit dataChanged(currentIndex, currentIndex, {Role::Count});
-                setMaxCount(word.first);
+                setMaxCount(word.count);
             }
             continue;
         }
 
-        auto bound = std::lower_bound(
-                storage.begin(), storage.end(), word,
-                [](const Entry &e, const auto &word) {
-                    if (e.count == word.first) {
-                        return e.word < word.second;
-                    }
-                    return e.count > word.first;
-                });
-
+        setMaxCount(word.count);
+        auto bound = std::lower_bound(storage.begin(), storage.end(), word);
         const auto insertIndex = std::distance(storage.begin(), bound);
         beginInsertRows({}, insertIndex, insertIndex);
-        storage.emplace(bound, Entry{std::move(word.second), word.first});
+        storage.emplace(bound, std::move(word));
         endInsertRows();
-        setMaxCount(word.first);
-
-    }
-
-    if(storage.size() > parser::constants::mostCommonWordsLimit) {
-        beginRemoveRows({}, parser::constants::mostCommonWordsLimit, storage.size() );
-        storage.resize(parser::constants::mostCommonWordsLimit);
-        endRemoveRows();
     }
 }
 
 void WordsPrimaryModel::setMaxCount(quint64 newMaxCount) noexcept
 {
-    if(newMaxCount > maxCount) {
+    if (newMaxCount > maxCount) {
         maxCount = newMaxCount;
         emit maxCountChanged();
     }
@@ -112,6 +112,9 @@ void WordsPrimaryModel::clear() noexcept
     beginResetModel();
     storage.clear();
     endResetModel();
+
+    maxCount = 0;
+    emit maxCountChanged();
 }
 
 }

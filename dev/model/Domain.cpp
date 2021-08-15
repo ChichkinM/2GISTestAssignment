@@ -6,8 +6,6 @@
 
 #include "Domain.h"
 
-#include <QDebug>
-
 namespace doublegis::model {
 
 Domain::Domain(parser::Domain &parser, QObject *parent) noexcept
@@ -19,30 +17,13 @@ Domain::Domain(parser::Domain &parser, QObject *parent) noexcept
           parser(parser)
 {
     connect(&parser.getStatistic(), &parser::Statistic::processedDataChanged,
-            this, [this](quint64 newProcessedData) {
-                if (processedData != newProcessedData) {
-                    processedData = newProcessedData;
-                    emit processedDataChanged();
-                }
-            });
-
+            this, &Domain::onProcessedDataChanged);
     connect(&parser.getStatistic(), &parser::Statistic::statisticChanged,
             this, &Domain::onNewStatistic);
-
     connect(&parser, &parser::Domain::fileSizeChanged,
-            this, [this](quint64 newFullSize) {
-                if (fullSize != newFullSize) {
-                    fullSize = newFullSize;
-                    emit fullSizeChanged();
-                }
-            });
+            this, &Domain::onFileSizeChanged);
     connect(&parser, &parser::Domain::finished,
-            this, [this]() {
-                if (status != Done) {
-                    status = Done;
-                    emit statusChanged();
-                }
-            });
+            this, &Domain::onFinished);
 }
 
 void Domain::run() noexcept
@@ -63,6 +44,52 @@ void Domain::onNewStatistic(doublegis::parser::MostCommonWordsStorage newStorage
 QString Domain::getFileName() const noexcept
 {
     return url.fileName();
+}
+
+void Domain::onFinished() noexcept
+{
+    if (status != Done) {
+        status = Done;
+        emit statusChanged();
+    }
+}
+
+void Domain::onFileSizeChanged(quint64 newFullSize) noexcept
+{
+    if (fullSize != newFullSize) {
+        fullSize = newFullSize;
+        emit fullSizeChanged();
+    }
+}
+
+void Domain::onProcessedDataChanged(quint64 newProcessedData) noexcept
+{
+    if (processedData != newProcessedData) {
+        processedData = newProcessedData;
+        emit processedDataChanged();
+    }
+}
+
+QUrl Domain::getUrl() const noexcept
+{
+    return url;
+}
+
+void Domain::setUrl(QUrl newUrl) noexcept
+{
+    if (url != newUrl) {
+        url = newUrl;
+        emit urlChanged();
+
+        status = NotRunning;
+        emit statusChanged();
+
+        processedData = 0;
+        emit processedDataChanged();
+
+        fullSize = 0;
+        emit fullSizeChanged();
+    }
 }
 
 }

@@ -23,7 +23,7 @@ Q_OBJECT
     Q_PROPERTY(doublegis::model::WordsProxyModel *proxy MEMBER wordsProxyModel CONSTANT)
 
     Q_PROPERTY(doublegis::model::Domain::Status status MEMBER status NOTIFY statusChanged)
-    Q_PROPERTY(QUrl url MEMBER url NOTIFY urlChanged)
+    Q_PROPERTY(QUrl url READ getUrl WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(QString fileName READ getFileName NOTIFY urlChanged)
     Q_PROPERTY(quint64 processedSize MEMBER processedData NOTIFY processedDataChanged)
     Q_PROPERTY(quint64 fullSize MEMBER fullSize NOTIFY fullSizeChanged)
@@ -45,6 +45,9 @@ public slots:
 
 private slots:
     void onNewStatistic(doublegis::parser::MostCommonWordsStorage newStorage) noexcept;
+    void onFinished() noexcept;
+    void onFileSizeChanged(quint64 newFullSize) noexcept;
+    void onProcessedDataChanged(quint64 newProcessedData) noexcept;
 
 signals:
     void urlChanged();
@@ -54,6 +57,9 @@ signals:
 
 private:
     QString getFileName() const noexcept;
+
+    QUrl getUrl() const noexcept;
+    void setUrl(QUrl newUrl) noexcept;
 
 private:
     WordsPrimaryModel *const wordsPrimaryModel;

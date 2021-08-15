@@ -5,45 +5,21 @@
  */
 
 #include "Domain.h"
-#include <QFile>
 #include <QDebug>
-#include <iostream>
-#include <QThread>
-#include <QUrl>
-#include <QDataStream>
-#include <QTimer>
 
 #include "Types.h"
 #include "ChunkParser.h"
+#include "Reader.h"
 
 
 namespace doublegis {
 namespace parser {
 
-namespace {
-size_t
-findFirstDelimeter(size_t current, size_t end, char *data)
-{
-    while (current != end) {
-        auto currentChar = *(data + current);// data.at(current);
-//        auto currentChar = *(data.data() + current);
-        auto found = std::find(constants::separators.begin(),
-                               constants::separators.end(), currentChar);
-        if (found != constants::separators.end()) {
-            return current;
-        }
-        ++current;
-    }
-    return end;
-}
-}
-
 Domain::Domain(QObject *parent) noexcept
         : QObject(parent),
-          pool(new QThreadPool(this)),
+          threadsCount(QThread::idealThreadCount() - 2),
           statistic(new Statistic(this))
 {
-    pool->setMaxThreadCount(1);
 }
 
 void Domain::invokeRun(const QUrl &source) noexcept
@@ -62,65 +38,56 @@ const Statistic &Domain::getStatistic() const noexcept
 
 quint8 Domain::getThreadsCount() const noexcept
 {
-    return pool->maxThreadCount();
+    return threadsCount;
 }
 
 void Domain::run(const QUrl &source) noexcept
 {
-    auto file = new QFile(source.path());
-    if (!file->exists()) {
-        qDebug() << "file not exist" << source.path();
+    assert(!reader && "file reader is already created");
+    try {
+        reader = std::make_unique<Reader>(source, nullptr);
+    }
+    catch (const std::logic_error &e) {
+        qDebug() << "Reader error" << e.what();
+        emit finished();
         return;
     }
 
-    if (!file->open(QIODevice::ReadOnly)) {
-        qDebug() << "open error";
+    emit fileSizeChanged(reader->getFileSize());
+    statistic->run(reader->getFileSize());
+
+    for (auto i = 0; i < getThreadsCount();) {
+        auto thread = std::make_shared<QThread>(nullptr);
+        threads.insert(thread);
+
+        auto parser = new ChunkParser(i, *reader, *statistic);
+        parser->moveToThread(thread.get());
+        thread->start();
+
+        connect(thread.get(), &QThread::started,
+                parser, &ChunkParser::run);
+        connect(parser, &ChunkParser::finished,
+                this, [this, thread]() {
+                    onThreadFinished(thread);
+                });
+        ++i;
+    }
+}
+
+void Domain::onThreadFinished(const QThreadPtr &thread) noexcept
+{
+    assert(thread && "thread is nullptr");
+
+    thread->quit();
+    thread->wait();
+    threads.erase(thread);
+
+    if (!threads.empty()) {
         return;
-    }
-
-    auto memory = file->map(0, file->size());
-    auto fileSize = file->size();
-    if (fileSize < 0) {
-        return;
-    }
-    uint64_t chunkSize = fileSize / getThreadsCount();
-    qDebug() << "threads:" << getThreadsCount();
-    qDebug() << "fileSize:" << fileSize;
-    qDebug() << "blockSize:" << chunkSize;
-
-    size_t currentIdx = 0;
-    size_t endIdx = fileSize;
-    int i = 0;
-
-    emit fileSizeChanged(fileSize);
-    statistic->run(fileSize);
-
-    while (currentIdx != endIdx) {
-        size_t length = chunkSize;
-        if (currentIdx + length > endIdx) {
-            length = endIdx - currentIdx;
-        } else {
-            length = findFirstDelimeter(currentIdx + length, endIdx,
-                                        (char *) memory) - currentIdx;
-        }
-
-
-        auto chunk = std::make_pair((char *) memory + currentIdx, length);
-        auto parser = new ChunkParser(std::move(chunk), i++, *statistic);
-        pool->start(parser);
-
-        currentIdx = currentIdx + length;
-    }
-
-    pool->waitForDone();
-    for (const auto &s : statistic->fullStatistic) {
-        qDebug() << s.first << s.second;
     }
 
     statistic->clear();
-    file->unmap(memory);
-    file->close();
-
+    reader.reset();
     emit finished();
 }
 

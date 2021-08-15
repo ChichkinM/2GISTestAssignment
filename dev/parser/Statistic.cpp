@@ -46,27 +46,23 @@ void Statistic::push(StatisticStorage &&words) noexcept
 bool Statistic::processUpdate(StatisticStorage::iterator entryIt) noexcept
 {
     if (mostCommon.size() >= constants::mostCommonWordsLimit &&
-        mostCommon.begin()->first > entryIt->second) {
+        mostCommon.rbegin()->count > entryIt->second) {
         return false;
     }
 
+    WordAndCount newWord{entryIt->first, entryIt->second};
     for (auto it = mostCommon.begin(); it != mostCommon.end(); it++) {
-        if (it->second == entryIt->first) {
+        if (it->word == newWord.word) {
             mostCommon.erase(it);
             break;
         }
     }
 
-    mostCommon.insert({entryIt->second, entryIt->first});
 
-    uint8_t keysCount(0);
-    for (auto it = mostCommon.begin(); it != mostCommon.end();
-         it = mostCommon.upper_bound(it->first)) {
-        ++keysCount;
-    }
+    mostCommon.insert(std::move(newWord));
 
-    if (keysCount > constants::mostCommonWordsLimit) {
-        mostCommon.erase(mostCommon.begin());
+    if (mostCommon.size() > constants::mostCommonWordsLimit) {
+        mostCommon.erase(*mostCommon.rbegin());
     }
 
     return true;

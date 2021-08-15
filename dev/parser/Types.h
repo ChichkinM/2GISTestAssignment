@@ -8,7 +8,10 @@
 
 #include <array>
 #include <map>
+#include <optional>
+#include <set>
 #include <QByteArray>
+#include <QString>
 
 namespace doublegis {
 namespace parser {
@@ -16,12 +19,26 @@ namespace parser {
 namespace constants {
 const std::array<char, 2> separators{' ', '\n'};
 const uint8_t mostCommonWordsLimit = 15;
+const uint32_t chunkSize = 30000;
 }
 
 using Word = QByteArray;
-using Chunk = std::pair<char*, size_t>;
+using Chunk = QByteArray;
+using OptChunk = std::optional<Chunk>;
 using StatisticStorage = std::map<Word, size_t>;
-using MostCommonWordsStorage = std::multimap< size_t, QString>;
+
+struct WordAndCount
+{
+    QString word;
+    quint64 count;
+
+    /* Используется для бинарного поиска.
+     * Сперва сортирует по счетчику (от большего к меньшему).
+     * При равных счетчиках сортирует лексографически.
+     * */
+    bool operator<(const WordAndCount &rhs) const noexcept;
+};
+using MostCommonWordsStorage = std::set<WordAndCount>;
 
 }
 }

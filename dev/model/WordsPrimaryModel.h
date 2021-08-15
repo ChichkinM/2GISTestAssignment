@@ -43,13 +43,7 @@ private:
     void setMaxCount(quint64 newMaxCount) noexcept;
 
 private:
-    struct Entry
-    {
-        QString word;
-        quint64 count;
-    };
-
-    std::vector<Entry> storage;
+    std::vector<parser::WordAndCount> storage;
     quint64 maxCount;
 };
 
