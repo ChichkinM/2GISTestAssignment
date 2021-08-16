@@ -39,7 +39,7 @@ void Statistic::push(StatisticStorage &&words) noexcept
     }
 
     if(mostCommonWordsUpdated) {
-        emit statisticChanged(mostCommon);
+        emit changed(std::make_shared<StatisticUpdate>(mostCommon));
     }
 }
 
@@ -75,7 +75,7 @@ void Statistic::update(size_t processedDataSize) noexcept
     auto newProgress = ((double) Statistic::processedDataSize / (double) fullDataSize) * 100;
 
     if (newProgress - prevProgressEmited >= 1) {
-        emit processedDataChanged(Statistic::processedDataSize);
+        emit changed(std::make_shared<StatisticUpdate>(Statistic::processedDataSize));
         prevProgressEmited = newProgress;
     }
 }

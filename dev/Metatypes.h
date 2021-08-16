@@ -13,8 +13,7 @@ namespace doublegis::metatypes {
 void registerTypes() noexcept
 {
     qRegisterMetaType<model::Domain *>();
-    qRegisterMetaType<doublegis::parser::MostCommonWordsStorage>(
-            "doublegis::parser::MostCommonWordsStorage");
+    qRegisterMetaType<doublegis::StatisticUpdatePtr>("doublegis::StatisticUpdatePtr");
     qmlRegisterUncreatableType<model::Domain>("Status", 1, 0, "Status", "");
 }
 

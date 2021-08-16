@@ -8,8 +8,9 @@
 
 #include <QObject>
 #include <QUrl>
-#include <parser/Domain.h>
+#include <QDateTime>
 
+#include <parser/Domain.h>
 #include "WordsPrimaryModel.h"
 #include "WordsProxyModel.h"
 
@@ -28,6 +29,9 @@ Q_OBJECT
     Q_PROPERTY(quint64 processedSize MEMBER processedData NOTIFY processedDataChanged)
     Q_PROPERTY(quint64 fullSize MEMBER fullSize NOTIFY fullSizeChanged)
 
+    Q_PROPERTY(QDateTime begin MEMBER begin NOTIFY beginChanged)
+    Q_PROPERTY(QDateTime end MEMBER end NOTIFY endChanged)
+
 public:
     enum Status
     {
@@ -43,11 +47,13 @@ public:
 public slots:
     void run() noexcept;
 
+private:
+    void resetStatuses() noexcept;
+
 private slots:
-    void onNewStatistic(doublegis::parser::MostCommonWordsStorage newStorage) noexcept;
     void onFinished() noexcept;
     void onFileSizeChanged(quint64 newFullSize) noexcept;
-    void onProcessedDataChanged(quint64 newProcessedData) noexcept;
+    void onStatisticUpdate(doublegis::StatisticUpdatePtr update) noexcept;
 
 signals:
     void urlChanged();
@@ -55,11 +61,22 @@ signals:
     void fullSizeChanged();
     void statusChanged();
 
+    void beginChanged();
+    void endChanged();
+
 private:
     QString getFileName() const noexcept;
 
     QUrl getUrl() const noexcept;
     void setUrl(QUrl newUrl) noexcept;
+
+    struct UpdateVisitor
+    {
+        Domain & self;
+
+        void operator()(doublegis::MostCommonWordsStorage newStorage) noexcept;
+        void operator()(doublegis::ProcessedData newProcessedData) noexcept;
+    };
 
 private:
     WordsPrimaryModel *const wordsPrimaryModel;
@@ -69,6 +86,9 @@ private:
     QUrl url;
     quint64 processedData;
     quint64 fullSize;
+
+    QDateTime begin;
+    QDateTime end;
 
     parser::Domain &parser;
 };

@@ -26,8 +26,7 @@ public:
     void clear() noexcept;
 
 signals:
-    void processedDataChanged(quint64 data);
-    void statisticChanged(doublegis::parser::MostCommonWordsStorage newStorage);
+    void changed(doublegis::StatisticUpdatePtr update);
 
 private:
     bool processUpdate(StatisticStorage::iterator entryIt) noexcept;

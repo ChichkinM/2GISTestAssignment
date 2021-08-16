@@ -7,7 +7,6 @@
 #include "Types.h"
 
 namespace doublegis {
-namespace parser {
 
 bool WordAndCount::operator<(const WordAndCount &rhs) const noexcept
 {
@@ -17,5 +16,4 @@ bool WordAndCount::operator<(const WordAndCount &rhs) const noexcept
     return count > rhs.count;
 }
 
-}
 }

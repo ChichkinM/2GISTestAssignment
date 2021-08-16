@@ -10,11 +10,13 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <variant>
+#include <memory>
+
 #include <QByteArray>
 #include <QString>
 
 namespace doublegis {
-namespace parser {
 
 namespace constants {
 const std::array<char, 2> separators{' ', '\n'};
@@ -39,6 +41,9 @@ struct WordAndCount
     bool operator<(const WordAndCount &rhs) const noexcept;
 };
 using MostCommonWordsStorage = std::set<WordAndCount>;
+using ProcessedData = quint64;
 
-}
+using StatisticUpdate = std::variant<MostCommonWordsStorage, ProcessedData>;
+using StatisticUpdatePtr = std::shared_ptr<StatisticUpdate>;
+
 }

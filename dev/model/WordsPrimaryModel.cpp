@@ -16,16 +16,19 @@ WordsPrimaryModel::WordsPrimaryModel(QObject *parent) noexcept
 {
 }
 
-void WordsPrimaryModel::update( parser::MostCommonWordsStorage newStorage) noexcept
+void WordsPrimaryModel::update(MostCommonWordsStorage newStorage) noexcept
 {
     if (storage.size() < newStorage.size()) {
         storage.reserve(newStorage.size());
     }
 
+    /*TODO можно было бы уменьшить сложность, используя сразу 2 итератор в одном цикле, т.к.
+     * оба контейнера отсортированы
+     * */
     for (auto it = storage.begin(); it != storage.end();) {
         const auto &entry = *it;
         auto found = std::find_if(newStorage.begin(), newStorage.end(),
-                                  [&entry](const parser::WordAndCount &word) {
+                                  [&entry](const WordAndCount &word) {
                                       return word.word == entry.word;
                                   });
         if (found == newStorage.end()) {

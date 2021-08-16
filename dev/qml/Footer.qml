@@ -26,6 +26,30 @@ Item {
         }
     }
 
+    Label {
+        id: performerLabel
+        anchors.centerIn: parent
+        visible: doublegis.model.status != Status.NotRunning
+
+        function update() {
+            var now = (new Date()).getTime() / 1000
+            var begin = doublegis.model.begin.getTime() / 1000
+            var end = doublegis.model.end.getTime() / 1000
+
+            var result = doublegis.model.status == Status.Running ?
+                                  now - begin : end - begin
+            performerLabel.text = result.toFixed(1) +  " сек."
+        }
+
+        Timer {
+            interval: 100
+            repeat: true
+            running: doublegis.model.status == Status.Running
+            onTriggered: performerLabel.update()
+            onRunningChanged: performerLabel.update()
+        }
+    }
+
     Image {
         id: autorenewImage
         visible: false

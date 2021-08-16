@@ -7,7 +7,7 @@
 #pragma once
 
 #include <QAbstractListModel>
-#include <parser/Types.h>
+#include <Types.h>
 
 namespace doublegis {
 namespace model {
@@ -26,7 +26,7 @@ public:
 public:
     explicit WordsPrimaryModel(QObject *parent) noexcept;
 
-    void update(parser::MostCommonWordsStorage newStorage) noexcept;
+    void update(MostCommonWordsStorage newStorage) noexcept;
     void clear() noexcept;
 
     quint64 getMaxCount() const noexcept;
@@ -43,7 +43,7 @@ private:
     void setMaxCount(quint64 newMaxCount) noexcept;
 
 private:
-    std::vector<parser::WordAndCount> storage;
+    std::vector<WordAndCount> storage;
     quint64 maxCount;
 };
 

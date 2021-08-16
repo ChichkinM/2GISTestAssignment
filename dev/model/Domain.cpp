@@ -16,10 +16,8 @@ Domain::Domain(parser::Domain &parser, QObject *parent) noexcept
           processedData(0),
           parser(parser)
 {
-    connect(&parser.getStatistic(), &parser::Statistic::processedDataChanged,
-            this, &Domain::onProcessedDataChanged);
-    connect(&parser.getStatistic(), &parser::Statistic::statisticChanged,
-            this, &Domain::onNewStatistic);
+    connect(&parser.getStatistic(), &parser::Statistic::changed,
+            this, &Domain::onStatisticUpdate);
     connect(&parser, &parser::Domain::fileSizeChanged,
             this, &Domain::onFileSizeChanged);
     connect(&parser, &parser::Domain::finished,
@@ -29,6 +27,10 @@ Domain::Domain(parser::Domain &parser, QObject *parent) noexcept
 void Domain::run() noexcept
 {
     wordsPrimaryModel->clear();
+    resetStatuses();
+
+    begin = QDateTime::currentDateTime();
+    emit beginChanged();
 
     status = Running;
     emit statusChanged();
@@ -36,9 +38,14 @@ void Domain::run() noexcept
     parser.invokeRun(url);
 }
 
-void Domain::onNewStatistic(doublegis::parser::MostCommonWordsStorage newStorage) noexcept
+void Domain::onStatisticUpdate(doublegis::StatisticUpdatePtr update) noexcept
 {
-    wordsPrimaryModel->update(std::move(newStorage));
+    std::visit(UpdateVisitor{*this}, std::move(*update));
+}
+
+void Domain::UpdateVisitor::operator()(doublegis::MostCommonWordsStorage newStorage) noexcept
+{
+    self.wordsPrimaryModel->update(std::move(newStorage));
 }
 
 QString Domain::getFileName() const noexcept
@@ -49,6 +56,9 @@ QString Domain::getFileName() const noexcept
 void Domain::onFinished() noexcept
 {
     if (status != Done) {
+        end = QDateTime::currentDateTime();
+        emit endChanged();
+
         status = Done;
         emit statusChanged();
     }
@@ -62,11 +72,11 @@ void Domain::onFileSizeChanged(quint64 newFullSize) noexcept
     }
 }
 
-void Domain::onProcessedDataChanged(quint64 newProcessedData) noexcept
+void Domain::UpdateVisitor::operator()(quint64 newProcessedData) noexcept
 {
-    if (processedData != newProcessedData) {
-        processedData = newProcessedData;
-        emit processedDataChanged();
+    if (self.processedData != newProcessedData) {
+        self.processedData = newProcessedData;
+        emit self.processedDataChanged();
     }
 }
 
@@ -81,15 +91,23 @@ void Domain::setUrl(QUrl newUrl) noexcept
         url = newUrl;
         emit urlChanged();
 
-        status = NotRunning;
-        emit statusChanged();
-
-        processedData = 0;
-        emit processedDataChanged();
-
-        fullSize = 0;
-        emit fullSizeChanged();
+        resetStatuses();
     }
+}
+
+/*TODO можно завести объект сессии,
+ * в пределах которого происходила бы одна обработка файла
+ * */
+void Domain::resetStatuses() noexcept
+{
+    status = NotRunning;
+    emit statusChanged();
+
+    processedData = 0;
+    emit processedDataChanged();
+
+    fullSize = 0;
+    emit fullSizeChanged();
 }
 
 }
